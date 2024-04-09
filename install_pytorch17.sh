@@ -19,7 +19,7 @@ pip install cython
 echo ""
 echo ""
 echo "****************** Installing opencv-python ******************"
-pip install opencv-python
+pip install opencv-python==4.1.0.25
 
 echo ""
 echo ""
@@ -39,13 +39,14 @@ pip install pycocotools
 echo ""
 echo ""
 echo "****************** Installing jpeg4py python wrapper ******************"
-apt-get install libturbojpeg
+# apt-get install libturbojpeg
+sudo pacman -S --noconfirm libjpeg-turbo
 pip install jpeg4py
 
 echo ""
 echo ""
 echo "****************** Installing tensorboard ******************"
-pip install tb-nightly
+pip install tb-nightly -i https://pypi.org/simple
 
 echo ""
 echo ""
@@ -80,17 +81,22 @@ pip install visdom
 echo ""
 echo ""
 echo "****************** Installing vot-toolkit python ******************"
-pip install git+https://github.com/votchallenge/vot-toolkit-python
+pip install vot-toolkit==0.5.3
 
 echo ""
 echo ""
 echo "****************** Installing onnx and onnxruntime-gpu ******************"
-pip install onnx onnxruntime-gpu==1.6.0
+pip install onnx==1.11.0 onnxruntime-gpu==1.8.0
 
 echo ""
 echo ""
 echo "****************** Installing timm ******************"
 pip install timm==0.3.2
+
+echo ""
+echo ""
+echo "****************** Installing yacs ******************"
+pip install yacs
 
 echo ""
 echo ""

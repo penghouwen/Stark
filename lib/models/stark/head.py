@@ -3,6 +3,8 @@ import torch
 import torch.nn.functional as F
 from lib.models.stark.backbone import FrozenBatchNorm2d
 from lib.models.stark.repvgg import RepVGGBlock
+
+
 # import time
 
 
@@ -274,7 +276,7 @@ class Corner_Predictor_Lite_Rep_v2(nn.Module):
 class MLP(nn.Module):
     """ Very simple multi-layer perceptron (also called FFN)"""
 
-    def __init__(self, input_dim, hidden_dim, output_dim, num_layers, BN=False):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers, BN=False, activate='relu'):
         super().__init__()
         self.num_layers = num_layers
         h = [hidden_dim] * (num_layers - 1)
@@ -284,11 +286,32 @@ class MLP(nn.Module):
         else:
             self.layers = nn.ModuleList(nn.Linear(n, k)
                                         for n, k in zip([input_dim] + h, h + [output_dim]))
+        self.activate = getattr(F, activate, F.relu)
 
     def forward(self, x):
         for i, layer in enumerate(self.layers):
-            x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
+            x = self.activate(layer(x)) if i < self.num_layers - 1 else layer(x)
         return x
+
+
+class ProbBoxHead(nn.Module):
+    def __init__(self, input_dim, hidden_dim, feat_sz, stride, num_layers, BN=False, activate='relu',
+                 softmax="softmax"):
+        super().__init__()
+        self.mlps = nn.ModuleList(MLP(input_dim, hidden_dim, feat_sz, num_layers=num_layers, BN=BN) for _ in range(4))
+        with torch.no_grad():
+            self.indice = torch.arange(0, feat_sz).unsqueeze(0).cuda() * stride
+        self.softmax = getattr(F, softmax, F.softmax)
+
+    def forward(self, x):
+        scores = [mlp(x) for mlp in self.mlps]
+        probs = [self.softmax(s, dim=-1) for s in scores]
+        coords = [torch.sum((p * self.indice), dim=-1) for p in probs]
+        return {
+            "scores": scores,
+            "probs": probs,
+            "coords": coords
+        }
 
 
 def build_box_head(cfg):
@@ -319,5 +342,18 @@ def build_box_head(cfg):
         else:
             raise ValueError()
         return corner_head
+    elif cfg.MODEL.HEAD_TYPE == "PROB_BOX":
+        hidden_dim = cfg.MODEL.HIDDEN_DIM
+        feat_sz = cfg.MODEL.FEAT_SZ
+        prob_head = ProbBoxHead(
+            hidden_dim,
+            hidden_dim,
+            feat_sz,
+            cfg.DATA.SEARCH.SIZE / feat_sz,
+            num_layers=3,
+            activate=cfg.MODEL.HEAD.ACTIVATE,
+            softmax=cfg.MODEL.HEAD.SOFTMAX
+        )
+        return prob_head
     else:
         raise ValueError("HEAD TYPE %s is not supported." % cfg.MODEL.HEAD_TYPE)

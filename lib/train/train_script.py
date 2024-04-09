@@ -7,6 +7,8 @@ from torch.nn import BCEWithLogitsLoss
 from lib.train.trainers import LTRTrainer
 # distributed training related
 from torch.nn.parallel import DistributedDataParallel as DDP
+
+from .actors.siamtr import SiamTrActor
 # some more advanced functions
 from .base_functions import *
 # network related
@@ -17,6 +19,8 @@ from lib.train.actors import STARKSActor, STARKSTActor
 from lib.train.actors import STARKLightningXtrtActor
 # for import modules
 import importlib
+
+from ..models.siamtr import build_siam_tr
 
 
 def run(settings):
@@ -57,6 +61,8 @@ def run(settings):
         net = build_starkst(cfg)
     elif settings.script_name == "stark_lightning_X_trt":
         net = build_stark_lightning_x_trt(cfg, phase="train")
+    elif settings.script_name == "siamtr":
+        net = build_siam_tr(cfg)
     else:
         raise ValueError("illegal script name")
 
@@ -83,6 +89,10 @@ def run(settings):
         objective = {'giou': giou_loss, 'l1': l1_loss}
         loss_weight = {'giou': cfg.TRAIN.GIOU_WEIGHT, 'l1': cfg.TRAIN.L1_WEIGHT}
         actor = STARKLightningXtrtActor(net=net, objective=objective, loss_weight=loss_weight, settings=settings)
+    elif settings.script_name == "siamtr":
+        objective = {'giou': giou_loss, 'l1': l1_loss}
+        loss_weight = {'giou': cfg.TRAIN.GIOU_WEIGHT, 'l1': cfg.TRAIN.L1_WEIGHT}
+        actor = SiamTrActor(net=net, objective=objective, loss_weight=loss_weight, settings=settings)
     else:
         raise ValueError("illegal script name")
 
