@@ -1,5 +1,5 @@
 echo "****************** Installing pytorch ******************"
-conda install -y pytorch==1.7.0 torchvision==0.8.1 cudatoolkit=10.2 -c pytorch
+conda install -y pytorch==1.7.0 torchvision==0.8.1 cudatoolkit=11.0 -c pytorch
 
 echo ""
 echo ""
@@ -40,7 +40,7 @@ echo ""
 echo ""
 echo "****************** Installing jpeg4py python wrapper ******************"
 # apt-get install libturbojpeg
-sudo pacman -S --noconfirm libjpeg-turbo
+#sudo pacman -S --noconfirm libjpeg-turbo
 pip install jpeg4py
 
 echo ""
@@ -55,7 +55,7 @@ pip install tikzplotlib
 
 echo ""
 echo ""
-echo "****************** Installing thop tool for FLOPs and Params computing ******************"
+echo "****************** Installing thop tool for FLOPs and Params computing ******************-"
 pip install --upgrade git+https://github.com/Lyken17/pytorch-OpCounter.git
 
 echo ""
